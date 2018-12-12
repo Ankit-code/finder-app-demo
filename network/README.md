@@ -12,6 +12,6 @@ The output will be the name of ecr repositories, the VPC id and the security gro
 
 After these steps are complete, cd to local-finder directory and run this command:
 
-	`bash run.sh <account-id-aws>.dkr.ecr.<region>.amazonaws.com
+	`bash run.sh <account-id-aws>.dkr.ecr.<region>.amazonaws.com`
 
 This will build all the required images and push to all repos created by ecr.tf . Ensure this step is complete before proceeding to services.
