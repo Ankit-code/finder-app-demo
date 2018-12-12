@@ -1,0 +1,51 @@
+version: "2"
+services:
+  redis:
+    image: redis:4.0
+    ports:
+      - "6379:6379"
+    mem_limit: 128m
+
+  app: &app
+    build: .
+    depends_on:
+      - redis
+    volumes:
+      - ./:/finder
+    ports:
+      - "8000:8000"
+    links:
+      - redis
+    environment:
+      - REDIS_HOSTNAME=redis 
+      - REDIS_PORT=6379
+    mem_limit: 128m
+    command: "gunicorn -b 0.0.0.0:8000 --access-logfile=- --reload -R --env PYTHONUNBUFFERED=1 -k gevent finder:app"
+
+  application:
+    <<: *app
+    ports:
+      - "5000:8000"
+    command: "gunicorn -b 0.0.0.0:8000 --access-logfile=- --reload -R --env PYTHONUNBUFFERED=1 -k gevent finder:app"
+
+  consul-server-bootstrap:
+    image: consul:latest
+    ports:
+      - "8400:8400"
+      - "8500:8500"
+      - "8600:8600"
+      - "8600:8600/udp"
+    command: "agent -server -bootstrap-expect 1 -ui -client 0.0.0.0"
+    mem_limit: 128m
+
+  registrator:
+    image: gliderlabs/registrator
+    network_mode: host
+    command:
+      - "consul://127.0.0.1:8500"
+    container_name: registrator
+    depends_on:
+      - consul-server-bootstrap
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock
+    mem_limit: 128m
